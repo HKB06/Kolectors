@@ -3,5 +3,7 @@ module.exports = function(api) {
   return {
     presets: ['babel-preset-expo'],
     /*plugins: ['nativewind/babel'],*/
+    /*plugin native babel fait beuguer l'appli*/
+
   };
 };
