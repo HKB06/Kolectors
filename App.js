@@ -19,11 +19,9 @@ const Tab = createBottomTabNavigator();
 
 export default function App() {
   const [loaded] = useFonts({
-    "BricolageGrotesque": require("./assets/fonts/BricolageGrotesque.ttf"),
-    "BricolageGrotesqueLight": require("./assets/fonts/BricolageGrotesqueLight.ttf"),
-    "NeueMachinaLight": require("./assets/fonts/NeueMachinaLight.otf"),
-    "NeueMachinaRegular": require("./assets/fonts/NeueMachinaRegular.otf"),
-    "NeueMachinaUltrabold": require("./assets/fonts/NeueMachinaUltrabold.otf"),
+    "Poppins": require("./assets/fonts/Poppins-Regular.ttf"),
+    "PoppinsBold": require("./assets/fonts/Poppins-Bold.ttf"),
+    "PoppinsMeduim": require("./assets/fonts/Poppins-Medium.ttf"),
   });
 
   const [isConnected, setIsConnected] = useState(false);
@@ -83,7 +81,7 @@ export default function App() {
                 component={HomeScreen}
                 options={{
                   headerStyle: { backgroundColor: '#FFCB05' },
-                  headerTitleStyle: { color: '#fff', fontFamily: 'NeueMachinaUltrabold' },
+                  headerTitleStyle: { color: '#fff', fontFamily: 'Poppins-Regular' },
                   contentStyle: { backgroundColor: '#FFCB05' }
                 }} 
               />
@@ -110,8 +108,8 @@ export default function App() {
                 name="Connexion"
                 component={LoginScreen}
                 options={{
-                  headerStyle: { backgroundColor: '#FFCB05' },
-                  headerTitleStyle: { color: '#fff', fontFamily: 'NeueMachinaUltrabold' },
+                  headerStyle: { backgroundColor: '#171925' },
+                  headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' },
                   contentStyle: { backgroundColor: '#F70305' }
                 }}
               />
@@ -119,10 +117,10 @@ export default function App() {
                 name="Inscription"
                 component={RegisterScreen}
                 options={{
-                  headerStyle: { backgroundColor: '#FFCB05' },
-                  headerTintColor:  '#9D775D',
-                  headerTitleStyle: { color: '#fff', fontFamily: 'NeueMachinaUltrabold' },
-                  contentStyle: { backgroundColor: '#2E3B52' }
+                  headerStyle: { backgroundColor: '#171925' },
+                  headerTintColor:  '#171925',
+                  headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' },
+                  contentStyle: { backgroundColor: '#fff' }
                 }}
               />
             </Stack.Navigator>
