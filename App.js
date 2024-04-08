@@ -13,6 +13,7 @@ import LoginScreen from './screens/LoginScreen';
 import HomeScreen from './screens/HomeScreen';
 import MyCollectionScreen from './screens/MyCollectionScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import KolectorScreen from './screens/KolectorScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -62,17 +63,20 @@ export default function App() {
                     iconName = 'albums-outline';
                   } else if (route.name === 'Mon Profil') {
                     iconName = 'person-outline';
+                  } else if (route.name === 'Kolectors') {
+                    iconName = 'book-outline';
                   }
+                  
                   return <Ionicons name={iconName} size={size} color={color} />;
                 },
                 tabBarStyle: {
-                  backgroundColor: '#FFCB05',
+                  backgroundColor: '#171925',
                   height: 90,
                   paddingHorizontal: 5,
                   paddingTop: 10,
                   borderTopWidth: 1,
                 },
-                tabBarActiveTintColor: '#001D95',
+                tabBarActiveTintColor: 'red',
                 tabBarInactiveTintColor: 'lightgray',
               })}
             >
@@ -83,6 +87,15 @@ export default function App() {
                   headerStyle: { backgroundColor: '#FFCB05' },
                   headerTitleStyle: { color: '#fff', fontFamily: 'Poppins-Regular' },
                   contentStyle: { backgroundColor: '#FFCB05' }
+                }} 
+              />
+              <Tab.Screen 
+                name="Kolectors" 
+                component={KolectorScreen}
+                options={{
+                  headerStyle: { backgroundColor: '#171925' },
+                  headerTitleStyle: { color: '#fff', fontFamily: 'Poppins-Regular' },
+                  contentStyle: { backgroundColor: '#fff' }
                 }} 
               />
               <Tab.Screen 

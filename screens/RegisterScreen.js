@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useContext } from 'react';
 import {
   TextInput,
   View,
@@ -7,12 +7,11 @@ import {
   Image,
   KeyboardAvoidingView,
   TouchableOpacity,
-  Platform,
   ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import AuthContext from '../contexts/AuthContext';
 
 export default function RegisterScreen({ navigation }) {
@@ -21,20 +20,14 @@ export default function RegisterScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-
-  useEffect(() => {
-    const checkToken = async () => {
-      const token = await AsyncStorage.getItem('token');
-      if (token) {
-        setIsConnected(true);
-      }
-    };
-    checkToken();
-  }, []);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
+  const [error, setError] = useState('');
 
   const register = async () => {
+    setError('');
     if (!username || !email || !password || password !== confirmPassword) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs et vous assurer que les mots de passe correspondent.');
+      setError('Veuillez remplir tous les champs et vous assurer que les mots de passe correspondent.');
       return;
     }
     axios({
@@ -48,74 +41,107 @@ export default function RegisterScreen({ navigation }) {
       headers: { 'Content-Type': 'application/json' }
     })
     .then(response => {
-      if (response.data.token) {
-        AsyncStorage.setItem('token', response.data.token);
-        setIsConnected(true);
-        navigation.navigate('Home');
+      if (response.data.status_code === 201) {
+        Alert.alert('Succès', response.data.status_message || 'Inscription réussie !', [
+          { text: 'OK', onPress: () => navigation.navigate('Connexion') }
+        ]);
       } else {
-        Alert.alert('Erreur d\'inscription', response.data.message);
+        let message = response.data.status_message;
+        if(response.data.errorsList) {
+          message += ": " + Object.values(response.data.errorsList).map(error => error.join(', ')).join('. ');
+        }
+        setError(message);
       }
     })
     .catch(error => {
-      console.error('Erreur:', error);
-      Alert.alert('Erreur', 'Un problème est survenu lors de l\'inscription.');
+      let message = error.response?.data?.status_message || 'Un problème est survenu lors de l\'inscription.';
+      if(error.response?.data?.errorsList) {
+        message += ": " + Object.values(error.response.data.errorsList).map(error => error.join(', ')).join('. ');
+      }
+      setError(message);
     });
   };
 
   return (
     <KeyboardAvoidingView 
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior="padding"
       className="flex-1"
     >
       <LinearGradient
         colors={['#171925', '#e73343']}
         className="flex-1"
       >
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-          <View className="items-center justify-center flex-1">
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps='handled'>
+          <View className="items-center w-full pt-20">
             <Image 
               source={require('../assets/graphic-assets/KolectorsB.png')}
-              className="w-4/5 h-40 resize-contain mt-6"
+              className="w-4/5 h-40 resize-contain"
             />
-            <TextInput
-              className="bg-white w-4/5 h-12 my-2 border border-gray-300 rounded-md px-4"
-              value={username}
-              onChangeText={setUsername}
-              placeholder='Nom d’utilisateur'
-              placeholderTextColor="#666"
-              autoCapitalize='none'
-            />
-            <TextInput
-              className="bg-white w-4/5 h-12 my-2 border border-gray-300 rounded-md px-4"
-              value={email}
-              onChangeText={setEmail}
-              placeholder='Email'
-              placeholderTextColor="#666"
-              autoCapitalize='none'
-            />
-            <TextInput
-              className="bg-white w-4/5 h-12 my-2 border border-gray-300 rounded-md px-4"
-              value={password}
-              onChangeText={setPassword}
-              placeholder='Mot de passe'
-              placeholderTextColor="#666"
-              secureTextEntry={true}
-            />
-            <TextInput
-              className="bg-white w-4/5 h-12 my-2 border border-gray-300 rounded-md px-4"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              placeholder='Confirmez le mot de passe'
-              placeholderTextColor="#666"
-              secureTextEntry={true}
-            />
-            <TouchableOpacity 
-              className="bg-red-500 w-4/5 rounded-lg py-3 my-2 items-center"
-              onPress={register}
-            >
-              <Text className="text-white font-bold text-lg">S'inscrire</Text>
-            </TouchableOpacity>
-            <View className="flex-row justify-center mt-4">
+            {error !== '' && (
+              <Text className="text-white text-center px-4 py-2">
+                {error}
+              </Text>
+            )}
+            <View className="w-4/5 my-8">
+              <TextInput
+                className="bg-white h-12 my-2 border border-gray-300 rounded-md px-4"
+                value={username}
+                onChangeText={setUsername}
+                placeholder='Nom d’utilisateur'
+                placeholderTextColor="#666"
+                autoCapitalize='none'
+              />
+              <TextInput
+                className="bg-white h-12 my-2 border border-gray-300 rounded-md px-4"
+                value={email}
+                onChangeText={setEmail}
+                placeholder='Email'
+                placeholderTextColor="#666"
+                keyboardType='email-address'
+                autoCapitalize='none'
+              />
+              <View className="flex-row items-center border border-gray-300 bg-white rounded-md px-2 h-12 my-2">
+                <TextInput
+                  className="flex-1"
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder='Mot de passe'
+                  placeholderTextColor="#666"
+                  secureTextEntry={!passwordVisible}
+                />
+                <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)}>
+                  <MaterialCommunityIcons 
+                    name={passwordVisible ? 'eye-off' : 'eye'} 
+                    size={24} 
+                    color="grey"
+                  />
+                </TouchableOpacity>
+              </View>
+              <View className="flex-row items-center border border-gray-300 bg-white rounded-md px-2 h-12 my-2">
+                <TextInput
+                  className="flex-1"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  placeholder='Confirmez le mot de passe'
+                  placeholderTextColor="#666"
+                  secureTextEntry={!confirmPasswordVisible}
+                />
+                <TouchableOpacity onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)}>
+                  <MaterialCommunityIcons 
+                    name={confirmPasswordVisible ? 'eye-off' : 'eye'} 
+                    size={24} 
+                    color="grey"
+                  />
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity 
+                className="bg-red-500 rounded-lg py-3 my-2 items-center"
+                onPress={register}
+              >
+                <Text className="text-white font-bold text-lg">S'inscrire</Text>
+              </TouchableOpacity>
+            </View>
+            <View className="flex-row justify-center mt-4 mb-4">
               <Text className="text-white">Déjà un compte ? </Text>
               <TouchableOpacity onPress={() => navigation.navigate('Connexion')}>
                 <Text className="text-red-500 font-bold">Connectez-vous</Text>

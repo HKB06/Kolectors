@@ -37,11 +37,6 @@ export default function LoginScreen({ navigation }) {
     });
   }, []);
 
-  const rotation = rotateAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-
   useEffect(() => {
     async function bootstrapAsync() {
       let userToken;
@@ -77,7 +72,7 @@ export default function LoginScreen({ navigation }) {
         await AsyncStorage.setItem('user', JSON.stringify(user));
         setUser(user);
         setIsConnected(true);
-        navigation.navigate('Home'); // Assuming 'Home' is the screen to navigate after login
+        navigation.navigate('Accueil');
       } else {
         setError("Les informations d'identification ne correspondent pas");
       }
@@ -97,54 +92,33 @@ export default function LoginScreen({ navigation }) {
       >
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
           <View className="items-center justify-center flex-1">
-            {/* Déplacer le logo plus près du haut de l'écran */}
             <View className="absolute top-20 w-full items-center">
               <Image 
                 source={require('../assets/graphic-assets/KolectorsB.png')}
-                className="w-4/5 h-40 resize-contain" // Hauteur ajustée pour correspondre à l'image
+                className="w-4/5 h-40 resize-contain"
               />
             </View>
-            {/* Les champs de saisie restent centrés dans la vue */}
-            <View className="w-4/5 flex-row items-center mb-2 mt-48">
-              <Animated.Image 
-                source={require('../assets/graphic-assets/Pokeball.png')}
-                className="w-6 h-6 resize-contain mr-2"
-                style={{ transform: [{ rotate: rotation }] }}
-              />
+            {error && <Text className="text-white text-center w-4/5 my-4">{error}</Text>}
+            <View className="w-4/5 mt-64">
               <TextInput
-                className="flex-1 h-12 bg-white border border-gray-300 rounded-md pl-2"
+                className="bg-white h-12 my-2 border border-gray-300 rounded-md px-4"
                 value={email}
                 onChangeText={setEmail}
                 placeholder='Email'
                 placeholderTextColor="#666"
                 autoCapitalize='none'
+                keyboardType='email-address'
               />
-              <Animated.Image 
-                source={require('../assets/graphic-assets/Pokeball.png')}
-                className="w-6 h-6 resize-contain ml-2"
-                style={{ transform: [{ rotate: rotation }] }}
-              />
-            </View>
-            {error && <Text className="text-white text-center w-4/5">{error}</Text>}
-            <View className="w-4/5 flex-row items-center mb-4 mt-4">
-              <Animated.Image 
-                source={require('../assets/graphic-assets/Pokeball.png')}
-                className="w-6 h-6 resize-contain mr-2"
-                style={{ transform: [{ rotate: rotation }] }}
-              />
-              <View className="flex-1 flex-row items-center border border-gray-300 bg-white rounded-md">
+              <View className="flex-row items-center border border-gray-300 bg-white rounded-md px-2 h-12 my-2">
                 <TextInput
-                  className="flex-1 pl-2 pr-2 h-12" // Ajuster le padding pour les pokeballs
+                  className="flex-1"
                   value={password}
                   onChangeText={setPassword}
                   placeholder='Mot de passe'
                   placeholderTextColor="#666"
                   secureTextEntry={!passwordVisible}
                 />
-                <TouchableOpacity
-                  className="absolute right-2"
-                  onPress={() => setPasswordVisible(!passwordVisible)}
-                >
+                <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)}>
                   <MaterialCommunityIcons 
                     name={passwordVisible ? 'eye-off' : 'eye'} 
                     size={24} 
@@ -152,24 +126,19 @@ export default function LoginScreen({ navigation }) {
                   />
                 </TouchableOpacity>
               </View>
-              <Animated.Image 
-                source={require('../assets/graphic-assets/Pokeball.png')}
-                className="w-6 h-6 resize-contain ml-2"
-                style={{ transform: [{ rotate: rotation }] }}
-              />
+              <TouchableOpacity 
+                className="bg-red-500 rounded-lg py-3 my-2 items-center"
+                onPress={login}
+              >
+                <Text className="text-white font-bold text-lg">Se connecter</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity 
-              className="w-4/5 bg-red-500 rounded-lg py-1 items-center mb-4"
-              onPress={login}
-            >
-              <Text className="text-white font-bold text-lg">Se connecter</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              className="w-4/5 bg-blue-500 rounded-lg py-1 items-center"
-              onPress={() => navigation.navigate('Inscription')}
-            >
-              <Text className="text-white font-bold text-lg">Inscrivez-vous</Text>
-            </TouchableOpacity>
+            <View className="flex-row justify-center mt-4">
+              <Text className="text-white">Pas de compte ? </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Inscription')}>
+                <Text className="text-red-500 font-bold">Inscrivez-vous</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </LinearGradient>
