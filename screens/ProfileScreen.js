@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     name: {
-        fontFamily: 'NeueMachinaUltrabold',
+        fontFamily: 'PoppinsBold',
         fontSize: 24,
         color: '#FFCB05',
         marginBottom: 10,
@@ -92,12 +92,12 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     label: {
-        fontFamily: 'BricolageGrotesqueLight',
+        fontFamily: 'PoppinsBold',
         color: '#FFCB05',
         marginRight: 10,
     },
     value: {
-        fontFamily: 'BricolageGrotesqueLight',
+        fontFamily: 'PoppinsBold',
         color: '#FFF',
     },
     logoutButton: {
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     logoutText: {
-        fontFamily: 'BricolageGrotesqueLight',
+        fontFamily: 'PoppinsBold',
         fontSize: 16,
         color: '#FFF',
     },

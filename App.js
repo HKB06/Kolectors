@@ -85,7 +85,7 @@ export default function App() {
                 component={HomeScreen}
                 options={{
                   headerStyle: { backgroundColor: '#FFCB05' },
-                  headerTitleStyle: { color: '#fff', fontFamily: 'Poppins-Regular' },
+                  headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' },
                   contentStyle: { backgroundColor: '#FFCB05' }
                 }} 
               />
@@ -94,7 +94,7 @@ export default function App() {
                 component={KolectorScreen}
                 options={{
                   headerStyle: { backgroundColor: '#171925' },
-                  headerTitleStyle: { color: '#fff', fontFamily: 'Poppins-Regular' },
+                  headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' },
                   contentStyle: { backgroundColor: '#fff' }
                 }} 
               />
@@ -103,7 +103,7 @@ export default function App() {
                 component={MyCollectionScreen}
                 options={{
                   headerStyle: { backgroundColor: '#FFCB05' },
-                  headerTitleStyle: { color: '#fff', fontFamily: 'NeueMachinaUltrabold' },
+                  headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' },
                 }}  
               />
               <Tab.Screen 
@@ -111,7 +111,7 @@ export default function App() {
                 component={ProfileScreen}
                 options={{
                   headerStyle: { backgroundColor: '#FFCB05'},
-                  headerTitleStyle: { color: '#fff', fontFamily: 'NeueMachinaUltrabold' },
+                  headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' },
                 }}  
               />
             </Tab.Navigator>
