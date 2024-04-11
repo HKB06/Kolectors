@@ -4,10 +4,37 @@ import { LinearGradient } from 'expo-linear-gradient';
 import axios from 'axios';
 import { Picker } from '@react-native-picker/picker';
 
+const FilterModal = ({ visible, onClose, selectedYear, years, onValueChange }) => (
+  <Modal
+    animationType="slide"
+    transparent={true}
+    visible={visible}
+    onRequestClose={onClose}
+  >
+    <View style={styles.centeredView}>
+      <View style={styles.modalView}>
+        <Picker
+          selectedValue={selectedYear}
+          onValueChange={onValueChange}
+          style={styles.picker}
+        >
+          {years.map(year => (
+            <Picker.Item key={year} label={year} value={year} />
+          ))}
+        </Picker>
+        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <Text style={styles.closeButtonText}>Fermer</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </Modal>
+);
+
 const KolectorScreen = ({ navigation }) => {
   const [sets, setSets] = useState([]);
+  const [selectedYear, setSelectedYear] = useState('Toutes');
   const [loading, setLoading] = useState(true);
-  const [yearFilter, setYearFilter] = useState('all');
+  const [years, setYears] = useState([]);
   const [isPickerVisible, setPickerVisible] = useState(false);
 
   useEffect(() => {
@@ -15,11 +42,13 @@ const KolectorScreen = ({ navigation }) => {
       try {
         const response = await axios.get('https://api.pokemontcg.io/v2/sets', {
           headers: {
-            'X-Api-Key': ''
+            'X-Api-Key': '5ee2f93b-faca-4e9d-a5c7-0c485097454e'
           }
         });
         const setsData = response.data.data;
-        setSets(setsData);
+        setSets(setsData.reverse());
+        const yearsExtracted = [...new Set(setsData.map(set => set.releaseDate.split('-')[0]))].sort().reverse();
+        setYears(['Toutes', ...yearsExtracted]);
       } catch (error) {
         console.error('Error while fetching sets:', error);
       } finally {
@@ -30,67 +59,50 @@ const KolectorScreen = ({ navigation }) => {
     fetchSets();
   }, []);
 
-  const handleYearFilterPress = () => {
-    setPickerVisible(true);
-  };
-
-  const handlePickerSelect = (itemValue) => {
-    setYearFilter(itemValue);
-    setPickerVisible(false);
-  };
-
-  const filteredSets = sets.filter(set => {
-    const matchYear = yearFilter === 'all' || new Date(set.releaseDate).getFullYear().toString() === yearFilter;
-    return matchYear;
-  });
+  const filteredSets = selectedYear === 'Toutes'
+    ? sets
+    : sets.filter(set => set.releaseDate.split('-')[0] === selectedYear);
 
   const renderSet = ({ item }) => (
-    <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('SetDetails', { setId: item.id })}>
-      <Image style={styles.setImage} source={{ uri: item.images.logo }} />
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => navigation.navigate('SetDetails', { setId: item.id })}
+    >
+      <Image
+        style={styles.setImage}
+        source={{ uri: item.images.logo }}
+      />
       <Text style={styles.setText}>{item.name}</Text>
     </TouchableOpacity>
   );
 
   if (loading) {
-    return <ActivityIndicator size="large" color="#ffffff" style={styles.centered} />;
+    return <ActivityIndicator size="large" color="#0000ff" />;
   }
 
   return (
-    <LinearGradient colors={['#171925', '#e73343']} style={styles.container}>
-      <View style={styles.filterRow}>
-        <TouchableOpacity style={styles.filterButton} onPress={handleYearFilterPress}>
-          <Text style={styles.filterText}>Par année</Text>
-        </TouchableOpacity>
-        {/* Placeholder for other filters */}
-      </View>
-      {isPickerVisible && (
-        <Modal
-          transparent={true}
-          animationType="slide"
-          visible={isPickerVisible}
-          onRequestClose={() => setPickerVisible(false)}
-        >
-          <View style={styles.centeredView}>
-            <View style={styles.modalView}>
-              <Picker
-                selectedValue={yearFilter}
-                onValueChange={handlePickerSelect}
-                style={styles.picker}
-              >
-                {/* Add Picker.Item components for each year */}
-                <Picker.Item label="Toutes" value="all" />
-                {/* Map through years if they are dynamic */}
-              </Picker>
-            </View>
-          </View>
-        </Modal>
-      )}
+    <LinearGradient
+      colors={['#171925', '#e73343']}
+      style={styles.container}
+    >
+      <TouchableOpacity onPress={() => setPickerVisible(true)} style={styles.filterButton}>
+        <Text style={styles.filterText}>Filtrer par année</Text>
+      </TouchableOpacity>
+
+      <FilterModal
+        visible={isPickerVisible}
+        onClose={() => setPickerVisible(false)}
+        selectedYear={selectedYear}
+        years={years}
+        onValueChange={(itemValue) => setSelectedYear(itemValue)}
+      />
+
       <FlatList
         data={filteredSets}
         renderItem={renderSet}
         keyExtractor={item => item.id}
         numColumns={2}
-        style={styles.flatList}
+        style={styles.list}
       />
     </LinearGradient>
   );
@@ -100,47 +112,40 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  filterRow: {
-    flexDirection: 'row',
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    justifyContent: 'flex-start',
-  },
-  filterButton: {
-    borderWidth: 1,
-    borderColor: '#fff',
-    paddingHorizontal: 15,
-    paddingVertical: 2,
-    borderRadius: 15,
-    marginRight: 10,
-  },
-  filterText: {
-    color: '#fff',
+  list: {
+    marginVertical: 20,
   },
   card: {
     flex: 1,
     margin: 10,
-    backgroundColor: 'black',
-    borderRadius: 10,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#060d38', // Couleur de fond de la carte
+    borderRadius: 10,
+    overflow: 'hidden',
   },
   setImage: {
-    width: '100%',
-    height: 150,
+    width: 150,
+    height: 100,
     resizeMode: 'contain',
   },
   setText: {
-    marginTop: 8,
     color: 'white',
+    marginTop: 8,
+    textAlign: 'center',
   },
   flatList: {
-    marginTop: 10,
+    marginTop: 5,
   },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
+  filterButton: {
+    backgroundColor: 'white',
+    borderRadius: 5,
+    margin: 10,
+    padding: 10,
     alignItems: 'center',
+  },
+  filterText: {
+    color: 'black',
   },
   centeredView: {
     flex: 1,
@@ -164,8 +169,20 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   picker: {
-    width: 100,
-    height: 160,
+    width: 250,
+    height: 150,
+  },
+  closeButton: {
+    backgroundColor: '#2196F3',
+    borderRadius: 5,
+    padding: 10,
+    elevation: 2,
+    marginTop: 15,
+  },
+  closeButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 

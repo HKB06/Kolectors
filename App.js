@@ -14,9 +14,19 @@ import HomeScreen from './screens/HomeScreen';
 import MyCollectionScreen from './screens/MyCollectionScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import KolectorScreen from './screens/KolectorScreen';
+import SetDetailsScreen from './screens/SetDetailsScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+
+function KolectorStack() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen name="KolectorScreen" component={KolectorScreen} options={{ headerShown: true, headerStyle: { backgroundColor: '#171925' },headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' },contentStyle: { backgroundColor: '#F70305' } }} />
+      <Stack.Screen name="SetDetails" component={SetDetailsScreen} />
+    </Stack.Navigator>
+  );
+}
 
 export default function App() {
   const [loaded] = useFonts({
@@ -91,11 +101,11 @@ export default function App() {
               />
               <Tab.Screen 
                 name="Kolectors" 
-                component={KolectorScreen}
+                component={KolectorStack}
                 options={{
-                  headerStyle: { backgroundColor: '#171925' },
-                  headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' },
-                  contentStyle: { backgroundColor: '#fff' }
+                  headerShown: false,
+                  tabBarLabel: 'Kolectors'
+                  
                 }} 
               />
               <Tab.Screen 
