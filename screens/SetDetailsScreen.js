@@ -13,7 +13,7 @@ const SetDetailsScreen = ({ route }) => {
       try {
         const response = await axios.get(`https://api.pokemontcg.io/v2/cards?q=set.id:${setId}`, {
           headers: {
-            'X-Api-Key': 'YOUR_API_KEY' // Replace with your actual API key
+            'X-Api-Key': 'YOUR_API_KEY' 
           }
         });
         setCards(response.data.data);

@@ -42,7 +42,7 @@ const KolectorScreen = ({ navigation }) => {
       try {
         const response = await axios.get('https://api.pokemontcg.io/v2/sets', {
           headers: {
-            'X-Api-Key': '5ee2f93b-faca-4e9d-a5c7-0c485097454e'
+            'X-Api-Key': ''
           }
         });
         const setsData = response.data.data;
