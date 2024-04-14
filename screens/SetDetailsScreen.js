@@ -1,19 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, Image, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  Image,
+  StyleSheet,
+  ActivityIndicator,
+  Modal,
+  TouchableOpacity,
+} from 'react-native';
 import axios from 'axios';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const SetDetailsScreen = ({ route }) => {
   const { setId } = route.params;
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedCard, setSelectedCard] = useState(null);
 
   useEffect(() => {
     const fetchCards = async () => {
       try {
         const response = await axios.get(`https://api.pokemontcg.io/v2/cards?q=set.id:${setId}`, {
           headers: {
-            'X-Api-Key': 'YOUR_API_KEY' 
+            'X-Api-Key': 'YOUR_API_KEY'
           }
         });
         setCards(response.data.data);
@@ -27,14 +37,19 @@ const SetDetailsScreen = ({ route }) => {
     fetchCards();
   }, [setId]);
 
+  const openModal = (card) => {
+    setSelectedCard(card);
+    setModalVisible(true);
+  };
+
   const renderCard = ({ item }) => (
-    <View style={styles.card}>
+    <TouchableOpacity onPress={() => openModal(item)} style={styles.card}>
       <Image
         style={styles.cardImage}
         source={{ uri: item.images.small }}
       />
       <Text style={styles.cardName}>{item.name}</Text>
-    </View>
+    </TouchableOpacity>
   );
 
   if (loading) {
@@ -42,31 +57,59 @@ const SetDetailsScreen = ({ route }) => {
   }
 
   return (
-    
-    <FlatList
-      data={cards}
-      renderItem={renderCard}
-      keyExtractor={item => item.id}
-      numColumns={3} // Changed to display three items per row
-      columnWrapperStyle={styles.row}
-    />
+    <View style={styles.container}>
+      <FlatList
+        data={cards}
+        renderItem={renderCard}
+        keyExtractor={item => item.id}
+        numColumns={3}
+        columnWrapperStyle={styles.row}
+      />
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          setModalVisible(!modalVisible);
+        }}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Image
+              style={styles.modalImage}
+              source={{ uri: selectedCard?.images.large }}
+            />
+            <TouchableOpacity
+              style={[styles.button, styles.buttonClose]}
+              onPress={() => setModalVisible(!modalVisible)}
+            >
+              <Text style={styles.textStyle}>Fermer</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f0f0f0',
+    paddingTop: 20,
+  },
   row: {
-    justifyContent: 'space-between', // This makes sure space between items is consistent
-    paddingHorizontal: 10, // Adjust as per your design requirements
+    justifyContent: 'space-between',
+    paddingHorizontal: 10,
   },
   card: {
     flex: 1,
     margin: 4,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff', // Assuming cards have a white background
+    backgroundColor: '#fff',
     borderRadius: 10,
     overflow: 'hidden',
-    // Add shadow to elevate the card look, adjust according to your design
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -77,18 +120,49 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   cardImage: {
-    width: '100%', // Images take full width of the card
+    width: '100%',
     height: undefined,
-    aspectRatio: 63 / 88, // The aspect ratio for standard cards; adjust if needed
-    resizeMode: 'contain', // Ensures image is not zoomed/stretched
+    aspectRatio: 63 / 88,
+    resizeMode: 'contain',
   },
   cardName: {
-    padding: 10, // Spacing around text
-    textAlign: 'center', // Center text horizontally
-    fontFamily: 'Poppins', // Use your preferred font
-    fontSize: 12, // Adjust font size as needed
+    marginTop: 5,
+    textAlign: 'center',
+    fontFamily: 'PoppinsBold',
+    fontSize: 12,
   },
-  // Add other styles if needed
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalView: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+  },
+  modalImage: {
+    width: 200,
+    height: 280,
+    resizeMode: 'contain',
+    marginBottom: 20,
+  },
+  button: {
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    elevation: 2,
+  },
+  buttonClose: {
+    backgroundColor: '#2196F3',
+  },
+  textStyle: {
+    color: '#fff',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
 });
 
 export default SetDetailsScreen;

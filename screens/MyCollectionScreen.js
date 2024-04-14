@@ -1,103 +1,105 @@
-// Importations des dépendances
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Alert, ScrollView, TextInput, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import AuthContext from '../contexts/AuthContext'; 
 
-// Composant MyCollectionScreen
-export default function MyCollectionScreen({ route, navigation }) {
-  // Utilisation du contexte d'authentification
-  const { setIsConnected } = React.useContext(AuthContext);
+const SearchCardsScreen = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // États pour les données du formulaire
-  const [pokemonName, setPokemonName] = useState('');
-  const [pokemonLevel, setPokemonLevel] = useState('');
-
-  // Fonction pour envoyer les données du formulaire
-  const addPokemonToCollection = async () => {
+  const handleSearch = async () => {
+    setLoading(true);
     try {
-      const token = await AsyncStorage.getItem('token');
-
-      // Envoi des données du formulaire au backend
-      const response = await axios.post('http://159.89.109.88:8000/api/user/add-pokemon', {
-        name: pokemonName,
-        level: pokemonLevel,
-      }, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
+      const response = await axios.get('https://api.pokemontcg.io/v2/cards', {
+        params: {
+          q: `name:${searchQuery}`
+        }
       });
-
-      // Traitement de la réponse du backend
-      if (response.data.success) {
-        Alert.alert('Succès', 'Pokémon ajouté à votre collection avec succès.');
-      } else {
-        Alert.alert('Erreur', 'Erreur lors de l\'ajout du Pokémon à votre collection.');
-      }
+      setSearchResults(response.data.data);
     } catch (error) {
-      console.log(error);
-      Alert.alert('Erreur', 'Une erreur est survenue.');
+      console.error('Error searching for cards:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Affichage du formulaire d'ajout de Pokémon */}
-      <View style={styles.formContainer}>
-        <TextInput
-          style={styles.input}
-          value={pokemonName}
-          onChangeText={setPokemonName}
-          placeholder="Nom du Pokémon"
-          placeholderTextColor="#666"
-        />
-        <TextInput
-          style={styles.input}
-          value={pokemonLevel}
-          onChangeText={setPokemonLevel}
-          placeholder="Extention du Pokémon"
-          placeholderTextColor="#666"
-          keyboardType="numeric"
-        />
-        <TouchableOpacity style={styles.button} onPress={addPokemonToCollection}>
-          <Text style={styles.buttonText}>Ajouter à la collection</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+  const renderCard = ({ item }) => (
+    <TouchableOpacity style={styles.card}>
+      <Image
+        source={{ uri: item.images.small }}
+        style={styles.cardImage}
+      />
+      <Text style={styles.cardName}>{item.name}</Text>
+    </TouchableOpacity>
   );
-}
 
-// Styles
+  return (
+    <View style={styles.container}>
+      <TextInput
+        style={styles.input}
+        placeholder="Search Pokémon card..."
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
+      <Button title="Search" onPress={handleSearch} />
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" />
+      ) : (
+        <FlatList
+          data={searchResults}
+          renderItem={renderCard}
+          keyExtractor={item => item.id}
+          numColumns={3}
+          columnWrapperStyle={styles.row}
+        />
+      )}
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    backgroundColor: '#f0f0f0',
-    alignItems: 'center',
-    paddingTop: 20,
-  },
-  formContainer: {
-    width: '80%',
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff',
   },
   input: {
-    height: 50,
-    backgroundColor: '#ffffff',
-    marginBottom: 10,
-    paddingLeft: 10,
-    borderRadius: 5,
+    height: 40,
+    borderColor: 'gray',
     borderWidth: 1,
-    borderColor: '#dddddd',
+    marginBottom: 10,
+    paddingHorizontal: 10,
   },
-  button: {
+  row: {
+    justifyContent: 'space-between',
+  },
+  card: {
+    flex: 1,
+    margin: 4,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  cardImage: {
     width: '100%',
-    backgroundColor: '#007bff',
-    padding: 15,
-    borderRadius: 5,
-    alignItems: 'center',
+    height: 120,
+    aspectRatio: 63 / 88,
+    resizeMode: 'contain',
   },
-  buttonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: 'bold',
+  cardName: {
+    marginTop: 5,
+    textAlign: 'center',
+    fontFamily: 'PoppinsBold',
+    fontSize: 12,
   },
 });
+
+export default SearchCardsScreen;
