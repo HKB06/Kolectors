@@ -3,6 +3,7 @@ import { View, Text, FlatList, Image, TouchableOpacity, ActivityIndicator, Style
 import { LinearGradient } from 'expo-linear-gradient';
 import axios from 'axios';
 import { Picker } from '@react-native-picker/picker';
+import LoadingIndicator from '../screens/LoadingIndicator';
 
 const FilterModal = ({ visible, onClose, selectedYear, years, onValueChange }) => (
   <Modal
@@ -59,6 +60,10 @@ const KolectorScreen = ({ navigation }) => {
     fetchSets();
   }, []);
 
+  if (loading) {
+    return <LoadingIndicator isLoading={loading} />;
+  }
+
   const filteredSets = selectedYear === 'Toutes'
     ? sets
     : sets.filter(set => set.releaseDate.split('-')[0] === selectedYear);
@@ -75,10 +80,6 @@ const KolectorScreen = ({ navigation }) => {
       <Text style={styles.setText}>{item.name}</Text>
     </TouchableOpacity>
   );
-
-  if (loading) {
-    return <ActivityIndicator size="large" color="#0000ff" />;
-  }
 
   return (
     <LinearGradient

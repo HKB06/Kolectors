@@ -5,11 +5,11 @@ import {
   FlatList,
   Image,
   StyleSheet,
-  ActivityIndicator,
   Modal,
   TouchableOpacity,
 } from 'react-native';
 import axios from 'axios';
+import LoadingIndicator from '../screens/LoadingIndicator';
 
 const SetDetailsScreen = ({ route }) => {
   const { setId } = route.params;
@@ -37,6 +37,10 @@ const SetDetailsScreen = ({ route }) => {
     fetchCards();
   }, [setId]);
 
+  if (loading) {
+    return <LoadingIndicator isLoading={loading} />;
+  }
+
   const openModal = (card) => {
     setSelectedCard(card);
     setModalVisible(true);
@@ -51,10 +55,6 @@ const SetDetailsScreen = ({ route }) => {
       <Text style={styles.cardName}>{item.name}</Text>
     </TouchableOpacity>
   );
-
-  if (loading) {
-    return <ActivityIndicator size="large" color="#0000ff" />;
-  }
 
   return (
     <View style={styles.container}>
