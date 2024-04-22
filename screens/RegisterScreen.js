@@ -32,7 +32,7 @@ export default function RegisterScreen({ navigation }) {
     }
     axios({
       method: 'post',
-      url: 'http://159.89.109.88:8000/api/register',
+      url: 'https://api.kolectors.live/api/register',
       data: {
         name: username,
         email: email,

@@ -1,12 +1,13 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, Animated, StyleSheet } from 'react-native';
+import React, { useEffect,useRef, useState } from 'react';
+import { Text, Animated, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
-const messages = ['Accrochez-vous, presque prêt...', 'Chargement de votre collection...', 'Récupération de vos données...']; 
+const messages = ['Accrochez-vous, presque prêt...', 'Chargement de votre collection...', 'Récupération de vos données...'];
 
 const LoadingIndicator = ({ isLoading }) => {
   const rotation = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(1)).current;
-  const messageIndex = useRef(0);
+  const [messageIndex, setMessageIndex] = useState(0);
 
   useEffect(() => {
     const spinAnimation = Animated.loop(
@@ -43,8 +44,8 @@ const LoadingIndicator = ({ isLoading }) => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      messageIndex.current = (messageIndex.current + 1) % messages.length;
-    }, 1000);
+      setMessageIndex((currentMessageIndex) => (currentMessageIndex + 1) % messages.length);
+    }, 3000); // Change le message toutes les 3 secondes
     return () => clearInterval(interval);
   }, []);
 
@@ -56,13 +57,16 @@ const LoadingIndicator = ({ isLoading }) => {
   if (!isLoading) return null;
 
   return (
-    <View style={styles.loadingContainer}>
+    <LinearGradient
+      colors={['#171925', '#e73343']}
+      style={styles.loadingContainer}
+    >
       <Animated.Image
         source={require('../assets/graphic-assets/Pokeball.png')}
         style={[styles.pokeball, { transform: [{ rotate: spin }, { scale }] }]}
       />
-      <Text style={styles.loadingText}>{messages[messageIndex.current]}</Text>
-    </View>
+      <Text style={styles.loadingText}>{messages[messageIndex]}</Text>
+    </LinearGradient>
   );
 };
 
@@ -75,8 +79,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)'
+    bottom: 0
   },
   pokeball: {
     width: 100,

@@ -15,6 +15,7 @@ import MyCollectionScreen from './screens/MyCollectionScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import KolectorScreen from './screens/KolectorScreen';
 import SetDetailsScreen from './screens/SetDetailsScreen';
+import LoadingIndicator from './screens/LoadingIndicator';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -22,8 +23,9 @@ const Tab = createBottomTabNavigator();
 function KolectorStack() {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="KolectorScreen" component={KolectorScreen} options={{ headerShown: true, headerStyle: { backgroundColor: '#171925' },headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' },contentStyle: { backgroundColor: '#F70305' } }} />
-      <Stack.Screen name="SetDetails" component={SetDetailsScreen} />
+      <Stack.Screen name="KolectorScreen" component={KolectorScreen} options={{ headerShown: true, headerStyle: { backgroundColor: '#171925' },headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' }, }} />
+      <Stack.Screen name="SetDetails" component={SetDetailsScreen} options={{ headerShown: true, headerStyle: { backgroundColor: '#171925' },headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' }, }} />
+      <Stack.Screen name="LoadingScreen" component={LoadingIndicator} options={{ headerShown: true, headerStyle: { backgroundColor: '#171925' },headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' }, }}/>
     </Stack.Navigator>
   );
 }

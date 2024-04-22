@@ -59,7 +59,7 @@ export default function LoginScreen({ navigation }) {
     }
 
     try {
-      const response = await axios.post('http://159.89.109.88:8000/api/login', {
+      const response = await axios.post('https://api.kolectors.live/api/login', {
         email: email,
         password: password
       }, {
