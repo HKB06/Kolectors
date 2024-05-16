@@ -1,22 +1,41 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Image, Modal, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Image, Alert } from 'react-native';
 import axios from 'axios';
-import AnimatedPokeball from './AnimatedPokeball'; // Import du composant d'animation
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
+import CardModal from './CardModal';
+import LoadingIndicator from './LoadingIndicator';
 
 const SearchCardsScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  const [collectedCards, setCollectedCards] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
+
+  useEffect(() => {
+    const fetchCollectedCards = async () => {
+      const token = await AsyncStorage.getItem('token');
+      if (token) {
+        try {
+          const response = await axios.get('https://api.kolectors.live/api/collections', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          setCollectedCards(response.data.map(card => card.pokemon_card_id));
+        } catch (error) {
+          console.error('Error fetching collected cards:', error);
+        }
+      }
+    };
+    fetchCollectedCards();
+  }, []);
 
   const handleSearch = async () => {
     setLoading(true);
     try {
       const response = await axios.get('https://api.pokemontcg.io/v2/cards', {
-        params: {
-          q: `name:${searchQuery}`
-        }
+        params: { q: `name:${searchQuery}` }
       });
       setSearchResults(response.data.data);
     } catch (error) {
@@ -27,57 +46,64 @@ const SearchCardsScreen = ({ navigation }) => {
   };
 
   const openModal = (item) => {
+    console.log('Opening modal for card:', item.name);
     setSelectedCard(item);
     setModalVisible(true);
   };
 
-  const addToCollection = async (cardId) => {
-    try {
-        const token = await AsyncStorage.getItem('token');
-        if (!token) {
-            Alert.alert("Erreur", "Aucun token d'authentification trouvé.");
-            return;
-        }
+  const addToCollection = async (card) => {
+    const cardId = card.id;
 
-        const response = await axios.post(`https://api.kolectors.live/api/user/add-card/${cardId}`, {}, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (response.data.status_code === 200) {
-            Alert.alert("Succès", "Carte ajoutée à votre collection !");
-        } else {
-            Alert.alert("Erreur", response.data.message);
-        }
-    } catch (error) {
-        console.error('Erreur lors de l\'ajout de la carte à la collection:', error);
-        Alert.alert("Erreur", "Problème lors de l'ajout de la carte à la collection.");
+    if (collectedCards.includes(cardId)) {
+      Alert.alert("Erreur", "Cette carte est déjà dans votre collection.");
+      return;
     }
-};
 
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        Alert.alert("Erreur", "Aucun token d'authentification trouvé.");
+        return;
+      }
 
+      const response = await axios.post('https://api.kolectors.live/api/collections/add', {
+        pokemon_card_id: cardId
+      }, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+
+      if (response.status === 200 || response.status === 201) {
+        Alert.alert("Succès", "Carte ajoutée à votre collection !");
+        setCollectedCards([...collectedCards, cardId]);
+        setModalVisible(false); // Close modal after adding to collection
+      } else {
+        Alert.alert("Erreur", `Un problème est survenu : ${response.status} - ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Erreur lors de l’ajout de la carte à la collection:', error);
+      Alert.alert("Erreur", `Problème lors de l'ajout de la carte à la collection: ${error.message}`);
+    }
+  };
 
   const renderCard = ({ item }) => (
     <TouchableOpacity
       style={styles.card}
       onPress={() => openModal(item)}
     >
-      <Image
-        source={{ uri: item.images.small }}
-        style={styles.cardImage}
-      />
+      <Image source={{ uri: item.images.small }} style={styles.cardImage} />
       <Text style={styles.cardName}>{item.name}</Text>
     </TouchableOpacity>
   );
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={['#171925', '#e73343']}
+      style={styles.container}
+    >
       <TextInput
         style={styles.input}
         placeholder="Search Pokémon card..."
-        placeholderTextColor="#aaa"
+        placeholderTextColor="#ccc"
         value={searchQuery}
         onChangeText={setSearchQuery}
       />
@@ -85,7 +111,7 @@ const SearchCardsScreen = ({ navigation }) => {
         <Text style={styles.buttonText}>Search</Text>
       </TouchableOpacity>
       {loading ? (
-        <AnimatedPokeball />
+        <LoadingIndicator isLoading={loading} />
       ) : (
         <FlatList
           data={searchResults}
@@ -95,130 +121,79 @@ const SearchCardsScreen = ({ navigation }) => {
           columnWrapperStyle={styles.row}
         />
       )}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => {
-          setModalVisible(!modalVisible);
-        }}
-      >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Image
-              style={styles.modalImage}
-              source={{ uri: selectedCard?.images.large }}
-            />
-            <TouchableOpacity
-              style={[styles.button, styles.buttonClose]}
-              onPress={() => addToCollection(selectedCard)}
-            >
-              <Text style={styles.textStyle}>Add to Collection</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.buttonClose]}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.textStyle}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    </View>
+      <CardModal
+        isVisible={modalVisible}
+        card={selectedCard}
+        onClose={() => setModalVisible(false)}
+        onAddToCollection={addToCollection}
+        onDeleteFromCollection={() => { /* Implémentez la logique de suppression si nécessaire */ }}
+      />
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#f9f9f9',
+    padding: 10,
+    backgroundColor: '#171925',
   },
   input: {
-    height: 50,
+    height: 40,
+    backgroundColor: 'white',
     borderColor: '#ccc',
     borderWidth: 1,
-    marginBottom: 10,
+    marginVertical: 10,
     paddingHorizontal: 10,
-    borderRadius: 25,
+    borderRadius: 12,
     fontSize: 16,
   },
   button: {
-    backgroundColor: '#ffcb05',
+    backgroundColor: '#e73343',
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 25,
+    borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   buttonText: {
-    color: '#2a75bb',
+    color: 'white',
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  loadingText: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
+    marginVertical: 20,
   },
   row: {
     justifyContent: 'space-between',
+    paddingHorizontal: 4,
   },
   card: {
-    flex: 1,
-    margin: 4,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    margin: 2,
+    backgroundColor: 'transparent',
+    borderRadius: 0,
+    overflow: 'visible',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.25,
+    shadowRadius: 2,
+    elevation: 3,
   },
   cardImage: {
     width: '100%',
-    height: 120,
+    height: 160,
     aspectRatio: 63 / 88,
     resizeMode: 'contain',
   },
   cardName: {
-    marginTop: 5,
     textAlign: 'center',
     fontSize: 12,
-  },
-  centeredView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 22,
-  },
-  modalView: {
-    margin: 20,
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 35,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5
-  },
-  modalImage: {
-    width: 200,
-    height: 280,
-    resizeMode: 'contain'
-  },
-  buttonClose: {
-    backgroundColor: '#2196F3',
-    borderRadius: 20,
-    padding: 10,
-    elevation: 2,
-    marginTop: 15
-  },
-  textStyle: {
     color: 'white',
-    fontWeight: 'bold',
-    textAlign: 'center'
+    marginTop: 4,
   },
 });
 

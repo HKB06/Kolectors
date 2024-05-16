@@ -23,7 +23,7 @@ const Tab = createBottomTabNavigator();
 function KolectorStack() {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="KolectorScreen" component={KolectorScreen} options={{ headerShown: true, headerStyle: { backgroundColor: '#171925' },headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' }, }} />
+      <Stack.Screen name="Extensions" component={KolectorScreen} options={{ headerShown: true, headerStyle: { backgroundColor: '#171925' },headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' }, }} />
       <Stack.Screen name="SetDetails" component={SetDetailsScreen} options={{ headerShown: true, headerStyle: { backgroundColor: '#171925' },headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' }, }} />
       <Stack.Screen name="LoadingScreen" component={LoadingIndicator} options={{ headerShown: true, headerStyle: { backgroundColor: '#171925' },headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' }, }}/>
     </Stack.Navigator>
@@ -113,8 +113,8 @@ export default function App() {
               <Tab.Screen 
                 name="Collection" 
                 component={MyCollectionScreen}
-                options={{
-                  headerStyle: { backgroundColor: '#FFCB05' },
+                options={{ headerShown: true, 
+                  headerStyle: { backgroundColor: '#171925' },
                   headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' },
                 }}  
               />
