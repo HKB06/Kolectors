@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
-import { Modal, View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Dimensions } from 'react-native';
+import React from 'react';
+import { Modal, View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import ImageViewer from 'react-native-image-zoom-viewer';
 
 const CardModal = ({ isVisible, card, onClose, onAddToCollection, onDeleteFromCollection }) => {
-  const [isImageZoomVisible, setIsImageZoomVisible] = useState(false);
-
   if (!card) return null;
 
   const imageUrl = card.images && card.images.large ? card.images.large : null;
@@ -20,73 +18,46 @@ const CardModal = ({ isVisible, card, onClose, onAddToCollection, onDeleteFromCo
     },
   ];
 
-  const openImageZoom = () => {
-    console.log('Opening image zoom');
-    setIsImageZoomVisible(true);
-  };
-
-  const closeImageZoom = () => {
-    console.log('Closing image zoom');
-    setIsImageZoomVisible(false);
-  };
-
   return (
-    <>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isVisible}
-        onRequestClose={onClose}
-      >
-        <View style={styles.centeredView}>
-          <View style={styles.modalContent}>
-            <TouchableOpacity onPress={openImageZoom}>
-              <Image
-                source={{ uri: imageUrl }}
-                style={styles.cardImage}
-              />
-            </TouchableOpacity>
-            <ScrollView style={styles.scrollView}>
-              <Text style={styles.cardTitle}>{card.name}</Text>
-              <Text style={styles.set}>{card.set.name}</Text>
-
-              <View style={styles.buttonRow}>
-                <TouchableOpacity style={styles.button} onPress={() => onAddToCollection(card)}>
-                  <Text style={styles.buttonText}>Add</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.button} onPress={() => onDeleteFromCollection(card)}>
-                  <Text style={styles.buttonText}>Delete</Text>
-                </TouchableOpacity>
-              </View>
-            </ScrollView>
-            <TouchableOpacity
-              style={[styles.button, styles.buttonClose]}
-              onPress={onClose}
-            >
-              <Text style={styles.buttonText}>Close</Text>
-            </TouchableOpacity>
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isVisible}
+      onRequestClose={onClose}
+    >
+      <View style={styles.centeredView}>
+        <View style={styles.modalContent}>
+          <View style={styles.imageContainer}>
+            <ImageViewer
+              imageUrls={images}
+              enableSwipeDown={true}
+              onSwipeDown={onClose}
+              renderIndicator={() => null} // Removes the "1/1" text
+              backgroundColor="white" // Sets background color to white
+            />
           </View>
-        </View>
-      </Modal>
+          <ScrollView style={styles.scrollView}>
+            <Text style={styles.cardTitle}>{card.name}</Text>
+            <Text style={styles.set}>{card.set.name}</Text>
 
-      <Modal
-        visible={isImageZoomVisible}
-        transparent={true}
-        onRequestClose={closeImageZoom}
-      >
-        <View style={styles.zoomContainer}>
-          <ImageViewer
-            imageUrls={images}
-            enableSwipeDown={true}
-            onSwipeDown={closeImageZoom}
-            onCancel={closeImageZoom}
-          />
-          <TouchableOpacity style={styles.closeImageZoomButton} onPress={closeImageZoom}>
-            <Text style={styles.closeButtonText}>Close Image</Text>
+            <View style={styles.buttonRow}>
+              <TouchableOpacity style={styles.button} onPress={() => onAddToCollection(card)}>
+                <Text style={styles.buttonText}>Add</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.button} onPress={() => onDeleteFromCollection(card)}>
+                <Text style={styles.buttonText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+          <TouchableOpacity
+            style={[styles.button, styles.buttonClose]}
+            onPress={onClose}
+          >
+            <Text style={styles.buttonText}>Close</Text>
           </TouchableOpacity>
         </View>
-      </Modal>
-    </>
+      </View>
+    </Modal>
   );
 };
 
@@ -110,10 +81,9 @@ const styles = StyleSheet.create({
     width: '90%',
     maxHeight: '80%',
   },
-  cardImage: {
+  imageContainer: {
     width: 300,
     height: 300,
-    resizeMode: 'contain',
   },
   scrollView: {
     width: '100%',
@@ -147,24 +117,6 @@ const styles = StyleSheet.create({
   },
   buttonClose: {
     marginTop: 10,
-  },
-  zoomContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeImageZoomButton: {
-    position: 'absolute',
-    top: 40,
-    right: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: 20,
-    padding: 10,
-  },
-  closeButtonText: {
-    color: 'white',
-    fontSize: 16,
   },
 });
 
