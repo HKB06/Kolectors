@@ -122,7 +122,7 @@ export default function App() {
                 name="Mon Profil" 
                 component={ProfileScreen}
                 options={{
-                  headerStyle: { backgroundColor: '#FFCB05'},
+                  headerStyle: { backgroundColor: '#171925'},
                   headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' },
                 }}  
               />

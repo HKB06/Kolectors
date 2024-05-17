@@ -5,11 +5,11 @@ import {
   FlatList,
   Image,
   StyleSheet,
-  Modal,
   TouchableOpacity,
 } from 'react-native';
 import axios from 'axios';
 import LoadingIndicator from '../screens/LoadingIndicator';
+import CardModal from './CardModal'; // Import the CardModal component
 
 const SetDetailsScreen = ({ route }) => {
   const { setId } = route.params;
@@ -37,14 +37,14 @@ const SetDetailsScreen = ({ route }) => {
     fetchCards();
   }, [setId]);
 
-  if (loading) {
-    return <LoadingIndicator isLoading={loading} />;
-  }
-
   const openModal = (card) => {
     setSelectedCard(card);
     setModalVisible(true);
   };
+
+  if (loading) {
+    return <LoadingIndicator isLoading={loading} />;
+  }
 
   const renderCard = ({ item }) => (
     <TouchableOpacity onPress={() => openModal(item)} style={styles.card}>
@@ -65,29 +65,13 @@ const SetDetailsScreen = ({ route }) => {
         numColumns={3}
         columnWrapperStyle={styles.row}
       />
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => {
-          setModalVisible(!modalVisible);
-        }}
-      >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Image
-              style={styles.modalImage}
-              source={{ uri: selectedCard?.images.large }}
-            />
-            <TouchableOpacity
-              style={[styles.button, styles.buttonClose]}
-              onPress={() => setModalVisible(!modalVisible)}
-            >
-              <Text style={styles.textStyle}>Fermer</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      {selectedCard && (
+        <CardModal
+          isVisible={modalVisible}
+          card={selectedCard}
+          onClose={() => setModalVisible(false)}
+        />
+      )}
     </View>
   );
 };
@@ -130,38 +114,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: 'PoppinsBold',
     fontSize: 12,
-  },
-  centeredView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modalView: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 20,
-    alignItems: 'center',
-  },
-  modalImage: {
-    width: 200,
-    height: 280,
-    resizeMode: 'contain',
-    marginBottom: 20,
-  },
-  button: {
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    elevation: 2,
-  },
-  buttonClose: {
-    backgroundColor: '#2196F3',
-  },
-  textStyle: {
-    color: '#fff',
-    fontWeight: 'bold',
-    textAlign: 'center',
   },
 });
 

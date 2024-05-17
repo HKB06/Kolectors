@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Image, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+  Image,
+  Alert
+} from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,7 +18,6 @@ import LoadingIndicator from './LoadingIndicator';
 const SearchCardsScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [collectedCards, setCollectedCards] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
@@ -22,7 +30,7 @@ const SearchCardsScreen = ({ navigation }) => {
           const response = await axios.get('https://api.kolectors.live/api/collections', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
-          setCollectedCards(response.data);
+          setCollectedCards(response.data.map(card => card.pokemon_card_id));
         } catch (error) {
           console.error('Error fetching collected cards:', error);
         }
@@ -48,72 +56,6 @@ const SearchCardsScreen = ({ navigation }) => {
   const openModal = (item) => {
     setSelectedCard(item);
     setModalVisible(true);
-  };
-
-  const addToCollection = async (card) => {
-    const cardId = card.id;
-
-    if (collectedCards.some(collectedCard => collectedCard.pokemon_card_id === cardId)) {
-      Alert.alert("Erreur", "Cette carte est déjà dans votre collection.");
-      return;
-    }
-
-    try {
-      const token = await AsyncStorage.getItem('token');
-      if (!token) {
-        Alert.alert("Erreur", "Aucun token d'authentification trouvé.");
-        return;
-      }
-
-      const response = await axios.post('https://api.kolectors.live/api/collections/add', {
-        pokemon_card_id: cardId
-      }, {
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-      });
-
-      if (response.status === 200 || 201) {
-        Alert.alert("Succès", "Carte ajoutée à votre collection !");
-        setCollectedCards([...collectedCards, response.data]);
-        setModalVisible(false); // Close modal after adding to collection
-      } else {
-        Alert.alert("Erreur", `Un problème est survenu : ${response.status} - ${response.statusText}`);
-      }
-    } catch (error) {
-      console.error('Erreur lors de l’ajout de la carte à la collection:', error);
-      Alert.alert("Erreur", `Problème lors de l'ajout de la carte à la collection: ${error.message}`);
-    }
-  };
-
-  const deleteFromCollection = async (card) => {
-    const collectionEntry = collectedCards.find(collectedCard => collectedCard.pokemon_card_id === card.id);
-
-    if (!collectionEntry) {
-      Alert.alert("Erreur", "Cette carte n'est pas dans votre collection.");
-      return;
-    }
-
-    try {
-      const token = await AsyncStorage.getItem('token');
-      if (!token) {
-        Alert.alert("Erreur", "Aucun token d'authentification trouvé.");
-        return;
-      }
-
-      const response = await axios.delete(`https://api.kolectors.live/api/collections/${collectionEntry.id}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (response.status === 204) {
-        Alert.alert("Succès", "Carte supprimée de votre collection !");
-        setCollectedCards(collectedCards.filter(item => item.id !== collectionEntry.id));
-        setModalVisible(false); // Close modal after deleting from collection
-      } else {
-        Alert.alert("Erreur", `Un problème est survenu : ${response.status} - ${response.statusText}`);
-      }
-    } catch (error) {
-      console.error('Erreur lors de la suppression de la carte de la collection:', error);
-      Alert.alert("Erreur", `Problème lors de la suppression de la carte de la collection: ${error.message}`);
-    }
   };
 
   const renderCard = ({ item }) => (
@@ -152,13 +94,13 @@ const SearchCardsScreen = ({ navigation }) => {
           columnWrapperStyle={styles.row}
         />
       )}
-      <CardModal
-        isVisible={modalVisible}
-        card={selectedCard}
-        onClose={() => setModalVisible(false)}
-        onAddToCollection={addToCollection}
-        onDeleteFromCollection={deleteFromCollection}
-      />
+      {selectedCard && (
+        <CardModal
+          isVisible={modalVisible}
+          card={selectedCard}
+          onClose={() => setModalVisible(false)}
+        />
+      )}
     </LinearGradient>
   );
 };
@@ -191,12 +133,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  loadingText: {
-    color: 'white',
-    fontSize: 16,
-    textAlign: 'center',
-    marginVertical: 20,
   },
   row: {
     justifyContent: 'space-between',

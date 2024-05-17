@@ -1,21 +1,63 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, Alert } from 'react-native';
 import { BarChart, PieChart } from "react-native-gifted-charts";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+
+const profileImages = [
+    require('../assets/graphic-assets/avatar1.png'),
+    require('../assets/graphic-assets/avatar2.png'),
+    require('../assets/graphic-assets/avatar3.png'),
+    require('../assets/graphic-assets/avatar4.png'),
+    require('../assets/graphic-assets/avatar5.png'),
+    require('../assets/graphic-assets/avatar6.png'),
+];
 
 export default function HomeScreen({ navigation }) {
-    const barData = [
-        { value: 45, label: 'Pokémon sauvages' },
-        { value: 25, label: 'Pokémon capturés' },
-        { value: 60, label: 'Badges obtenus' },
-        { value: 35, label: 'Pokédollars' },
-        { value: 20, label: 'Pokéballs' },
-    ];
+    const [userData, setUserData] = useState(null);
+    const [avatar, setAvatar] = useState(profileImages[0]);
+    const [barData, setBarData] = useState([]);
+    const [pieData, setPieData] = useState([]);
 
-    const pieData = [
-        { value: 60, color: '#FFCB05' },
-        { value: 25, color: '#FF0000' },
-        { value: 15, color: '#0046BE' },
-    ];
+    useEffect(() => {
+        const fetchUserData = async () => {
+            const token = await AsyncStorage.getItem('token');
+            const savedImageIndex = await AsyncStorage.getItem('profileImageIndex');
+            if (savedImageIndex !== null) {
+                setAvatar(profileImages[parseInt(savedImageIndex)]);
+            }
+            if (token) {
+                try {
+                    const response = await axios.get('https://api.kolectors.live/api/user', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    setUserData(response.data);
+
+                    // Update barData and pieData with dynamic values
+                    const fetchedBarData = [
+                        { value: response.data.wildPokemon || 0, label: 'Pokémon sauvages' },
+                        { value: response.data.capturedPokemon || 0, label: 'Pokémon capturés' },
+                        { value: response.data.badgesObtained || 0, label: 'Badges obtenus' },
+                        { value: response.data.pokedollars || 0, label: 'Pokédollars' },
+                        { value: response.data.pokeballs || 0, label: 'Pokéballs' },
+                    ];
+
+                    const fetchedPieData = [
+                        { value: response.data.wildPokemon || 0, color: '#FFCB05' },
+                        { value: response.data.capturedPokemon || 0, color: '#FF0000' },
+                        { value: response.data.badgesObtained || 0, color: '#0046BE' },
+                    ];
+
+                    setBarData(fetchedBarData);
+                    setPieData(fetchedPieData);
+                } catch (error) {
+                    console.error('Error fetching user data:', error);
+                }
+            }
+        };
+
+        fetchUserData();
+    }, []);
 
     const renderLegendComponent = () => {
         return (
@@ -38,6 +80,12 @@ export default function HomeScreen({ navigation }) {
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
+            <View style={styles.profileSection}>
+                <Image source={avatar} style={styles.avatar} />
+                {userData && (
+                    <Text style={styles.userName}>{userData.name}</Text>
+                )}
+            </View>
             <View style={styles.chartContainer}>
                 <Text style={styles.chartTitle}>Statistiques Pokémon</Text>
                 <BarChart
@@ -75,9 +123,24 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
     container: {
         flexGrow: 1,
-        backgroundColor: '#f0f0f0',
+        backgroundColor: '#0A1931',
         alignItems: 'center',
         paddingTop: 30,
+    },
+    profileSection: {
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    avatar: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        marginBottom: 10,
+    },
+    userName: {
+        fontFamily: 'PoppinsBold',
+        fontSize: 20,
+        color: '#FFCB05',
     },
     chartContainer: {
         backgroundColor: '#ffffff',
