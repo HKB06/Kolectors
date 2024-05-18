@@ -95,10 +95,10 @@ export default function App() {
               <Tab.Screen 
                 name="Accueil" 
                 component={HomeScreen}
-                options={{
-                  headerStyle: { backgroundColor: '#FFCB05' },
+                options={{headerShown: true, 
+                  headerStyle: { backgroundColor: '#171925' },
                   headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' },
-                  contentStyle: { backgroundColor: '#FFCB05' }
+                  
                 }} 
               />
               <Tab.Screen 
@@ -106,7 +106,7 @@ export default function App() {
                 component={KolectorStack}
                 options={{
                   headerShown: false,
-                  tabBarLabel: 'Kolectors'
+                  tabBarLabel: 'Extensions',
                   
                 }} 
               />
@@ -118,6 +118,7 @@ export default function App() {
                   headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' },
                 }}  
               />
+              
               <Tab.Screen 
                 name="Mon Profil" 
                 component={ProfileScreen}

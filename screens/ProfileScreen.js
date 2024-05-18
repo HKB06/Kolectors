@@ -85,6 +85,15 @@ export default function ProfileScreen({ route, navigation }) {
         setIsModalVisible(false);
     };
 
+    const refreshData = async () => {
+        const token = await AsyncStorage.getItem('token');
+        if (token) {
+            const user = JSON.parse(await AsyncStorage.getItem('user'));
+            setUser(user);
+            await fetchCollectionData(token);
+        }
+    };
+
     if (route.params && route.params.user) {
         const userData = route.params.user;
         setUser(Object.fromEntries(userData));
@@ -125,6 +134,10 @@ export default function ProfileScreen({ route, navigation }) {
                         <Text style={styles.label}>Valeur totale de la collection :</Text>
                         <Text style={styles.value}>${totalValue.toFixed(2)}</Text>
                     </View>
+                    <TouchableOpacity style={styles.refreshButton} onPress={refreshData}>
+                        <Icon name="refresh" size={24} color="#FFF" />
+                        <Text style={styles.refreshButtonText}>Rafraîchir</Text>
+                    </TouchableOpacity>
                     <TouchableOpacity style={styles.logoutButton} onPress={logout}>
                         <Text style={styles.logoutText}>Déconnexion</Text>
                     </TouchableOpacity>
@@ -229,6 +242,26 @@ const styles = StyleSheet.create({
         fontFamily: 'PoppinsBold',
         color: '#FFF',
         flex: 2,
+    },
+    refreshButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFCB05',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 25,
+        marginTop: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    refreshButtonText: {
+        fontFamily: 'PoppinsBold',
+        fontSize: 16,
+        color: '#232D41',
+        marginLeft: 10,
     },
     logoutButton: {
         backgroundColor: '#FF0000',

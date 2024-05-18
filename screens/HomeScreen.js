@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, Alert } from 'react-native';
-import { BarChart, PieChart } from "react-native-gifted-charts";
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Animated } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { PieChart, LineChart } from 'react-native-gifted-charts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const profileImages = [
     require('../assets/graphic-assets/avatar1.png'),
@@ -16,120 +18,218 @@ const profileImages = [
 export default function HomeScreen({ navigation }) {
     const [userData, setUserData] = useState(null);
     const [avatar, setAvatar] = useState(profileImages[0]);
-    const [barData, setBarData] = useState([]);
     const [pieData, setPieData] = useState([]);
+    const [lineData, setLineData] = useState([]);
+    const [error, setError] = useState(null);
+    const rotation = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        const fetchUserData = async () => {
+        fetchUserData();
+    }, []);
+
+    const fetchUserData = async () => {
+        try {
             const token = await AsyncStorage.getItem('token');
             const savedImageIndex = await AsyncStorage.getItem('profileImageIndex');
+
             if (savedImageIndex !== null) {
                 setAvatar(profileImages[parseInt(savedImageIndex)]);
             }
-            if (token) {
-                try {
-                    const response = await axios.get('https://api.kolectors.live/api/user', {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    setUserData(response.data);
 
-                    // Update barData and pieData with dynamic values
-                    const fetchedBarData = [
-                        { value: response.data.wildPokemon || 0, label: 'Pokémon sauvages' },
-                        { value: response.data.capturedPokemon || 0, label: 'Pokémon capturés' },
-                        { value: response.data.badgesObtained || 0, label: 'Badges obtenus' },
-                        { value: response.data.pokedollars || 0, label: 'Pokédollars' },
-                        { value: response.data.pokeballs || 0, label: 'Pokéballs' },
-                    ];
-
-                    const fetchedPieData = [
-                        { value: response.data.wildPokemon || 0, color: '#FFCB05' },
-                        { value: response.data.capturedPokemon || 0, color: '#FF0000' },
-                        { value: response.data.badgesObtained || 0, color: '#0046BE' },
-                    ];
-
-                    setBarData(fetchedBarData);
-                    setPieData(fetchedPieData);
-                } catch (error) {
-                    console.error('Error fetching user data:', error);
-                }
+            if (!token) {
+                console.error('No token found');
+                setError('No token found. Please log in again.');
+                return;
             }
-        };
 
+            const response = await axios.get('https://api.kolectors.live/api/user', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            const data = response.data;
+            setUserData(data);
+
+            const collectionsResponse = await axios.get('https://api.kolectors.live/api/collections', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            const collections = collectionsResponse.data;
+
+            // Préparer les données pour les graphiques
+            const cardsBySeries = collections.reduce((acc, card) => {
+                const series = card.set_series; // Utiliser la série de la carte
+                if (!acc[series]) {
+                    acc[series] = 0;
+                }
+                acc[series]++;
+                return acc;
+            }, {});
+
+            const totalMoneyOverTime = collections.reduce((acc, card) => {
+                const date = card.created_at.split('T')[0];
+                const amount = parseFloat(card.price_market);
+                if (!isNaN(amount)) {
+                    if (!acc[date]) {
+                        acc[date] = 0;
+                    }
+                    acc[date] += amount;
+                }
+                return acc;
+            }, {});
+
+            // Vérifiez et nettoyez les données
+            const fetchedPieData = Object.keys(cardsBySeries).map(series => ({
+                value: cardsBySeries[series],
+                color: getRandomColor(),
+                text: series
+            }));
+
+            const fetchedLineData = Object.keys(totalMoneyOverTime).map(date => ({
+                value: totalMoneyOverTime[date],
+                label: formatDate(date)
+            }));
+
+            setPieData(fetchedPieData);
+            setLineData(fetchedLineData);
+        } catch (error) {
+            console.error('Error fetching user data:', error);
+            if (error.response && error.response.status === 401) {
+                setError('Unauthorized. Please log in again.');
+                await AsyncStorage.removeItem('token');
+            } else {
+                setError('Failed to fetch user data. Please try again.');
+            }
+        }
+    };
+
+    const handleRefresh = () => {
+        startSpinAnimation();
         fetchUserData();
-    }, []);
+    };
+
+    const startSpinAnimation = () => {
+        rotation.setValue(0);
+        Animated.timing(rotation, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+        }).start();
+    };
+
+    const spin = rotation.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0deg', '360deg']
+    });
 
     const renderLegendComponent = () => {
         return (
             <View style={styles.legendContainer}>
-                <View style={styles.legendRow}>
-                    <View style={[styles.legendDot, { backgroundColor: '#FFCB05' }]} />
-                    <Text style={styles.legendText}>Pokémon sauvages</Text>
-                </View>
-                <View style={styles.legendRow}>
-                    <View style={[styles.legendDot, { backgroundColor: '#FF0000' }]} />
-                    <Text style={styles.legendText}>Pokémon capturés</Text>
-                </View>
-                <View style={styles.legendRow}>
-                    <View style={[styles.legendDot, { backgroundColor: '#0046BE' }]} />
-                    <Text style={styles.legendText}>Badges obtenus</Text>
-                </View>
+                {pieData.map((item, index) => (
+                    <View key={index} style={styles.legendRow}>
+                        <View style={[styles.legendDot, { backgroundColor: item.color }]} />
+                        <Text style={styles.legendText}>{item.text}</Text>
+                    </View>
+                ))}
             </View>
         );
     };
 
+    const getRandomColor = () => {
+        const letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    };
+
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+    };
+
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <View style={styles.profileSection}>
-                <Image source={avatar} style={styles.avatar} />
-                {userData && (
-                    <Text style={styles.userName}>{userData.name}</Text>
+        <LinearGradient colors={['#171925', '#e73343']} style={styles.container}>
+            <ScrollView contentContainerStyle={styles.scrollViewContent}>
+                <View style={styles.profileSection}>
+                    <View style={styles.profileInfo}>
+                        <Image source={avatar} style={styles.avatar} />
+                        {userData && (
+                            <Text style={styles.userName}>{userData.name}</Text>
+                        )}
+                    </View>
+                    <TouchableOpacity onPress={handleRefresh}>
+                        <Animated.View style={{ transform: [{ rotate: spin }] }}>
+                            <Icon name="refresh" size={30} color="#FFCB05" />
+                        </Animated.View>
+                    </TouchableOpacity>
+                </View>
+                {error && (
+                    <Text style={styles.errorText}>{error}</Text>
                 )}
-            </View>
-            <View style={styles.chartContainer}>
-                <Text style={styles.chartTitle}>Statistiques Pokémon</Text>
-                <BarChart
-                    data={barData}
-                    barWidth={20}
-                    spacing={24}
-                    roundedTop
-                    roundedBottom
-                    hideRules
-                    xAxisThickness={0}
-                    yAxisThickness={0}
-                    yAxisTextStyle={{ color: 'gray' }}
-                    noOfSections={3}
-                    maxValue={100}
-                    isAnimated
-                />
-            </View>
-            <View style={styles.chartContainer}>
-                <Text style={styles.chartTitle}>Répartition des types</Text>
-                <PieChart
-                    data={pieData}
-                    donut
-                    showGradient
-                    sectionAutoFocus
-                    radius={90}
-                    innerRadius={60}
-                    innerCircleColor={'#232D41'}
-                />
-                {renderLegendComponent()}
-            </View>
-        </ScrollView>
+                <View style={styles.chartContainer}>
+                    <Text style={styles.chartTitle}>Nombre de cartes par série</Text>
+                    <PieChart
+                        data={pieData}
+                        donut
+                        showGradient
+                        sectionAutoFocus
+                        radius={90}
+                        innerRadius={60}
+                        innerCircleColor={'#232D41'}
+                        isAnimated
+                    />
+                    {renderLegendComponent()}
+                </View>
+                <View style={styles.chartContainer}>
+                    <Text style={[styles.chartTitle, styles.lineChartTitle]}>Budget total de votre collection</Text>
+                    <View style={styles.lineChartWrapper}>
+                        <LineChart
+                            data={lineData}
+                            width={250} // Ajustez cette largeur pour s'assurer que le graphique reste dans le cadre
+                            height={250}
+                            xAxisColor="#6D4C41"
+                            yAxisColor="#6D4C41"
+                            color="#FFCB05"
+                            yAxisTextStyle={{ color: '#6D4C41' }}
+                            xAxisTextStyle={{ color: '#6D4C41' }}
+                            initialSpacing={10}
+                            spacing={40}
+                            noOfSections={10}
+                            maxValue={Math.max(...lineData.map(d => d.value), 10)}
+                            hideDataPoints={false}
+                            dataPointsColor="#FFCB05"
+                            dataPointsRadius={4}
+                            thickness={2}
+                            isAnimated
+                            animationDuration={1000}
+                        />
+                    </View>
+                </View>
+            </ScrollView>
+        </LinearGradient>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
+        flex: 1,
+    },
+    scrollViewContent: {
         flexGrow: 1,
-        backgroundColor: '#0A1931',
         alignItems: 'center',
         paddingTop: 30,
     },
     profileSection: {
         alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '90%',
         marginBottom: 20,
+    },
+    profileInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     avatar: {
         width: 100,
@@ -139,8 +239,9 @@ const styles = StyleSheet.create({
     },
     userName: {
         fontFamily: 'PoppinsBold',
-        fontSize: 20,
+        fontSize: 30,
         color: '#FFCB05',
+        marginLeft: 50,
     },
     chartContainer: {
         backgroundColor: '#ffffff',
@@ -149,12 +250,32 @@ const styles = StyleSheet.create({
         padding: 20,
         width: '90%',
         alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
     },
     chartTitle: {
         color: '#6D4C41',
         fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 10,
+        textAlign: 'center',
+    },
+    lineChartTitle: {
+        color: '#6D4C41',
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 10,
+        textAlign: 'center',
+    },
+    lineChartWrapper: {
+        width: '100%',
+        padding: 10,
+        backgroundColor: '#ffffff',
+        borderRadius: 10,
+        alignItems: 'center',
     },
     legendContainer: {
         flexDirection: 'row',
@@ -177,5 +298,11 @@ const styles = StyleSheet.create({
     legendText: {
         color: '#6D4C41',
         fontSize: 14,
+    },
+    errorText: {
+        color: 'red',
+        fontSize: 16,
+        marginBottom: 20,
+        textAlign: 'center',
     },
 });
