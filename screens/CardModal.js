@@ -151,22 +151,22 @@ const CardModal = ({ isVisible, card, onClose }) => {
             <ScrollView style={styles.scrollView}>
               <Text style={styles.cardTitle}>{card.name}</Text>
               <Text style={styles.set}>{card.set.name}</Text>
-              <Text style={styles.rarity}>Rarity: {card.rarity}</Text>
-              <Text style={styles.artist}>Artist: {card.artist}</Text>
+              <Text style={styles.rarity}>Rareté: {card.rarity}</Text>
+              <Text style={styles.artist}>Artiste: {card.artist}</Text>
               {prices && (
                 <View style={styles.priceContainer}>
-                  <Text style={styles.price}>Low: ${prices.low}</Text>
+                  <Text style={styles.price}>Bas: ${prices.low}</Text>
                   <Text style={styles.price}>Mid: ${prices.mid}</Text>
-                  <Text style={styles.price}>High: ${prices.high}</Text>
-                  <Text style={styles.price}>Market: ${prices.market}</Text>
+                  <Text style={styles.price}>Haut: ${prices.high}</Text>
+                  <Text style={styles.price}>Marché: ${prices.market}</Text>
                 </View>
               )}
               <View style={styles.buttonRow}>
                 <TouchableOpacity style={[styles.button, styles.addButton]} onPress={() => addToCollection(card)}>
-                  <Text style={styles.buttonText}>Add</Text>
+                  <Text style={styles.buttonText}>Ajouter</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.button, styles.deleteButton]} onPress={() => deleteFromCollection(card)}>
-                  <Text style={styles.buttonText}>Delete</Text>
+                  <Text style={styles.buttonText}>Supprimer</Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>

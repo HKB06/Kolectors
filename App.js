@@ -18,7 +18,6 @@ import SetDetailsScreen from './screens/SetDetailsScreen';
 import LoadingIndicator from './screens/LoadingIndicator';
 import SearchCardsScreen from './screens/SearchScreen';
 
-
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -102,7 +101,6 @@ export default function App() {
                 options={{headerShown: true, 
                   headerStyle: { backgroundColor: '#171925' },
                   headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' },
-                  
                 }} 
               />
               <Tab.Screen 
@@ -111,10 +109,8 @@ export default function App() {
                 options={{
                   headerShown: false,
                   tabBarLabel: 'Extensions',
-                  
                 }} 
               />
-
               <Tab.Screen 
                 name="Recherche" 
                 component={SearchCardsScreen}
@@ -123,7 +119,6 @@ export default function App() {
                   headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' },
                 }}  
               />
-
               <Tab.Screen 
                 name="Collection" 
                 component={MyCollectionScreen}
@@ -132,7 +127,6 @@ export default function App() {
                   headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' },
                 }}  
               />
-              
               <Tab.Screen 
                 name="Mon Profil" 
                 component={ProfileScreen}
@@ -141,10 +135,6 @@ export default function App() {
                   headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' },
                 }}  
               />
-
-              
-
-              
             </Tab.Navigator>
           ) : (
             <Stack.Navigator initialRouteName="Connexion">

@@ -21,6 +21,7 @@ const SearchCardsScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
+  const [collectedCards, setCollectedCards] = useState([]);  // Ajout de l'état collectedCards
 
   useEffect(() => {
     const fetchCollectedCards = async () => {
@@ -30,7 +31,7 @@ const SearchCardsScreen = ({ navigation }) => {
           const response = await axios.get('https://api.kolectors.live/api/collections', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
-          setCollectedCards(response.data.map(card => card.pokemon_card_id));
+          setCollectedCards(response.data.map(card => card.pokemon_card_id));  // Utilisation de setCollectedCards
         } catch (error) {
           console.error('Error fetching collected cards:', error);
         }

@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     padding: 10,
     elevation: 2,
-    marginTop: 15,
+    marginTop: 70,
   },
   closeButtonText: {
     color: 'white',

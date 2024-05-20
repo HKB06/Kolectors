@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Animated } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Animated, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { PieChart, LineChart } from 'react-native-gifted-charts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { useFocusEffect } from '@react-navigation/native';
 
 const profileImages = [
     require('../assets/graphic-assets/avatar1.png'),
@@ -21,13 +22,21 @@ export default function HomeScreen({ navigation }) {
     const [pieData, setPieData] = useState([]);
     const [lineData, setLineData] = useState([]);
     const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(false);
     const rotation = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         fetchUserData();
     }, []);
 
+    useFocusEffect(
+        useCallback(() => {
+            fetchUserData();
+        }, [])
+    );
+
     const fetchUserData = async () => {
+        setLoading(true);
         try {
             const token = await AsyncStorage.getItem('token');
             const savedImageIndex = await AsyncStorage.getItem('profileImageIndex');
@@ -39,6 +48,7 @@ export default function HomeScreen({ navigation }) {
             if (!token) {
                 console.error('No token found');
                 setError('No token found. Please log in again.');
+                setLoading(false);
                 return;
             }
 
@@ -54,52 +64,58 @@ export default function HomeScreen({ navigation }) {
             });
 
             const collections = collectionsResponse.data;
-
-            // Préparer les données pour les graphiques
-            const cardsBySeries = collections.reduce((acc, card) => {
-                const series = card.set_series; // Utiliser la série de la carte
-                if (!acc[series]) {
-                    acc[series] = 0;
-                }
-                acc[series]++;
-                return acc;
-            }, {});
-
-            const totalMoneyOverTime = collections.reduce((acc, card) => {
-                const date = card.created_at.split('T')[0];
-                const amount = parseFloat(card.price_market);
-                if (!isNaN(amount)) {
-                    if (!acc[date]) {
-                        acc[date] = 0;
-                    }
-                    acc[date] += amount;
-                }
-                return acc;
-            }, {});
-
-            // Vérifiez et nettoyez les données
-            const fetchedPieData = Object.keys(cardsBySeries).map(series => ({
-                value: cardsBySeries[series],
-                color: getRandomColor(),
-                text: series
-            }));
-
-            const fetchedLineData = Object.keys(totalMoneyOverTime).map(date => ({
-                value: totalMoneyOverTime[date],
-                label: formatDate(date)
-            }));
-
-            setPieData(fetchedPieData);
-            setLineData(fetchedLineData);
+            updateChartData(collections);
+            setLoading(false);
         } catch (error) {
             console.error('Error fetching user data:', error);
             if (error.response && error.response.status === 401) {
                 setError('Unauthorized. Please log in again.');
                 await AsyncStorage.removeItem('token');
             } else {
-                setError('Failed to fetch user data. Please try again.');
+                setError('Failed to fetch user data. Please try again later.');
             }
+            setLoading(false);
         }
+    };
+
+    const updateChartData = (collections) => {
+        const cardsBySeries = collections.reduce((acc, card) => {
+            const series = card.set_series; // Utiliser la série de la carte
+            if (!acc[series]) {
+                acc[series] = 0;
+            }
+            acc[series]++;
+            return acc;
+        }, {});
+
+        const totalMoneyOverTime = collections.reduce((acc, card) => {
+            const date = card.created_at.split('T')[0];
+            const amount = parseFloat(card.price_market);
+            if (!isNaN(amount)) {
+                if (!acc[date]) {
+                    acc[date] = 0;
+                }
+                acc[date] += amount;
+            }
+            return acc;
+        }, {});
+
+        // Vérifiez et nettoyez les données
+        const fetchedPieData = Object.keys(cardsBySeries).map(series => ({
+            value: cardsBySeries[series],
+            color: getRandomColor(),
+            text: series
+        }));
+
+        // Trier les dates dans l'ordre chronologique
+        const sortedDates = Object.keys(totalMoneyOverTime).sort((a, b) => new Date(a) - new Date(b));
+        const fetchedLineData = sortedDates.map(date => ({
+            value: totalMoneyOverTime[date],
+            label: formatDate(date)
+        }));
+
+        setPieData(fetchedPieData);
+        setLineData(fetchedLineData);
     };
 
     const handleRefresh = () => {
@@ -148,6 +164,15 @@ export default function HomeScreen({ navigation }) {
         return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}`;
     };
 
+    if (loading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#FFCB05" />
+                <Text style={styles.loadingText}>Chargement des données...</Text>
+            </View>
+        );
+    }
+
     return (
         <LinearGradient colors={['#171925', '#e73343']} style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollViewContent}>
@@ -158,11 +183,6 @@ export default function HomeScreen({ navigation }) {
                             <Text style={styles.userName}>{userData.name}</Text>
                         )}
                     </View>
-                    <TouchableOpacity onPress={handleRefresh}>
-                        <Animated.View style={{ transform: [{ rotate: spin }] }}>
-                            <Icon name="refresh" size={30} color="#FFCB05" />
-                        </Animated.View>
-                    </TouchableOpacity>
                 </View>
                 {error && (
                     <Text style={styles.errorText}>{error}</Text>
@@ -182,11 +202,11 @@ export default function HomeScreen({ navigation }) {
                     {renderLegendComponent()}
                 </View>
                 <View style={styles.chartContainer}>
-                    <Text style={[styles.chartTitle, styles.lineChartTitle]}>Budget total de votre collection</Text>
+                    <Text style={[styles.chartTitle, styles.lineChartTitle]}>Budget journalier de votre collection</Text>
                     <View style={styles.lineChartWrapper}>
                         <LineChart
                             data={lineData}
-                            width={250} // Ajustez cette largeur pour s'assurer que le graphique reste dans le cadre
+                            width={260} // Ajustez cette largeur pour s'assurer que le graphique reste dans le cadre
                             height={250}
                             xAxisColor="#6D4C41"
                             yAxisColor="#6D4C41"
@@ -304,5 +324,15 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginBottom: 20,
         textAlign: 'center',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    loadingText: {
+        marginTop: 10,
+        fontSize: 16,
+        color: '#FFCB05',
     },
 });
