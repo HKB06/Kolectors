@@ -16,6 +16,8 @@ import ProfileScreen from './screens/ProfileScreen';
 import KolectorScreen from './screens/KolectorScreen';
 import SetDetailsScreen from './screens/SetDetailsScreen';
 import LoadingIndicator from './screens/LoadingIndicator';
+import SearchCardsScreen from './screens/SearchScreen';
+
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -77,6 +79,8 @@ export default function App() {
                     iconName = 'person-outline';
                   } else if (route.name === 'Kolectors') {
                     iconName = 'book-outline';
+                  } else if (route.name === 'Recherche') {
+                    iconName = 'search';
                   }
                   
                   return <Ionicons name={iconName} size={size} color={color} />;
@@ -110,6 +114,16 @@ export default function App() {
                   
                 }} 
               />
+
+              <Tab.Screen 
+                name="Recherche" 
+                component={SearchCardsScreen}
+                options={{
+                  headerStyle: { backgroundColor: '#171925'},
+                  headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' },
+                }}  
+              />
+
               <Tab.Screen 
                 name="Collection" 
                 component={MyCollectionScreen}
@@ -127,6 +141,10 @@ export default function App() {
                   headerTitleStyle: { color: '#fff', fontFamily: 'PoppinsBold' },
                 }}  
               />
+
+              
+
+              
             </Tab.Navigator>
           ) : (
             <Stack.Navigator initialRouteName="Connexion">

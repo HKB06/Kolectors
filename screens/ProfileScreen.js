@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import AuthContext from '../contexts/AuthContext';
 import UserContext from '../contexts/UserContext';
 import { useFocusEffect } from '@react-navigation/native';
+import { calculateTotalValue } from './CalculCard';  // Importez la fonction utilitaire
 
 const profileImages = [
  require('../assets/graphic-assets/avatar1.png'),
@@ -55,7 +56,7 @@ export default function ProfileScreen({ route, navigation }) {
             }).start();
 
             return () => {
-                fadeAnim.setValue(0); // Reset animation value when screen loses focus
+                fadeAnim.setValue(0); 
             };
         }, [fadeAnim])
     );
@@ -69,10 +70,13 @@ export default function ProfileScreen({ route, navigation }) {
 
             setCardCount(cards.length);
 
-            const total = cards.reduce((sum, card) => {
-                return sum + (card.price_mid ? parseFloat(card.price_mid) : 0);
-            }, 0);
+            const detailedCards = await Promise.all(cards.map(async (card) => {
+                const cardResponse = await axios.get(`https://api.pokemontcg.io/v2/cards/${card.pokemon_card_id}`);
+                const cardData = cardResponse.data.data;
+                return { ...card, details: cardData };
+            }));
 
+            const total = calculateTotalValue(detailedCards);  // Utilisez la fonction utilitaire
             setTotalValue(total);
         } catch (error) {
             console.error('Error fetching collection data:', error);
